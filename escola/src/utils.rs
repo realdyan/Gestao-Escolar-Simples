@@ -21,7 +21,7 @@ pub fn ler_inteiro(label: &str) -> i32 {
 
         match input.parse::<i32>() {
             Ok(num) => return num,
-            Err(_) => println!("❌ Por favor, digite um número válido."),
+            Err(_) => println!("Por favor, digite um número válido."),
         }
     }
 }
@@ -31,4 +31,15 @@ pub fn esperar_enter() {
     println!("\nPressione Enter para continuar...");
     let mut _temp = String::new();
     io::stdin().read_line(&mut _temp).unwrap();
+}
+
+// Função utilitária para ler entrada do usuário e converter para f64(float)
+pub fn ler_float(label: &str) -> f64 {
+    loop {
+        let input = ler_entrada(label);
+        match input.replace(',', ".").parse::<f64>() { // replace ajuda se o usuário usar vírgula
+            Ok(num) => return num,
+            Err(_) => println!("Por favor, digite um valor numérico válido (Ex: 1500.50)."),
+        }
+    }
 }

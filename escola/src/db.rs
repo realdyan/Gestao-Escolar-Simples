@@ -1,7 +1,7 @@
 use rusqlite::{params, Connection, Result};
 
 // Importa a struct Escola do módulo cadastros
-use crate::mods::cadastros::Escola;
+use crate::mods::cadastros::{Escola, Professor};
 
 
 pub fn inicializar_db() -> Result<Connection> {
@@ -140,9 +140,9 @@ pub fn inicializar_db() -> Result<Connection> {
     Ok(conn)
 }          
 
-// =========== CADASTRO / ALTERAÇÃO / REMOÇÃO DE DADOS ===========
+// =========== CADASTRO / ALTERAÇÃO / REMOÇÃO / LISTAGEM ===========
 
-// ESCOLA
+// ESCOLA (CADASTRO / ALTERAÇÃO / REMOÇÃO / LISTAGEM)
 
 // Função para inserir uma nova escola no db
 pub fn inserir_escola(conn: &Connection, escola: &Escola) -> Result<()> {
@@ -205,3 +205,70 @@ pub fn listar_escolas_db(conn: &Connection) -> Result<Vec<Escola>> {
     }
     Ok(escolas)
 }
+
+// =====================================
+
+// PROFESSOR (CADASTRO / ALTERAÇÃO / REMOÇÃO / LISTAGEM)
+
+// -- Função para inserir um novo professor no db --
+pub fn inserir_professor(conn: &Connection, p: &Professor) -> Result<()> {
+    conn.execute(
+        "INSERT INTO Professor (nome_professor, nomecompleto_professor, email, telefone, endereco, 
+         data_nascimento, cpf, data_contratacao, salario_inicial, salario_atual) 
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?9)", // Usando salário inicial = atual na inserção
+        params![
+            p.nome_professor, p.nome_completo, p.email, p.telefone, 
+            p.endereco, p.data_nascimento, p.cpf, p.data_contratacao, p.salario_atual
+        ],
+    )?;
+    Ok(())
+}
+
+// -- Função para listar Professores -
+pub fn listar_professores_db(conn: &Connection) -> Result<Vec<Professor>> {
+    let mut stmt = conn.prepare("SELECT id_professor, nome_professor, email, cpf, salario_atual FROM Professor")?;
+    let prof_iter = stmt.query_map([], |row| {
+        Ok(Professor {
+            id_professor: Some(row.get(0)?),
+            nome_professor: row.get(1)?,
+            nome_completo: String::new(), // Simplificado para a lista
+            email: row.get(2)?,
+            telefone: String::new(),
+            endereco: String::new(),
+            data_nascimento: String::new(),
+            cpf: row.get(3)?,
+            data_contratacao: String::new(),
+            salario_atual: row.get(4)?,
+        })
+    })?;
+
+    let mut professores = Vec::new();
+    for p in prof_iter { professores.push(p?); }
+    Ok(professores)
+}
+
+pub fn atualizar_professor_db(conn: &Connection, id: i32, p: &Professor) -> Result<()> {
+    conn.execute(
+        "UPDATE Professor SET nome_professor = ?1, nomecompleto_professor = ?2, email = ?3, 
+         telefone = ?4, endereco = ?5, data_nascimento = ?6, cpf = ?7, data_contratacao = ?8, 
+         salario_atual = ?9 WHERE id_professor = ?10",
+        params![
+            p.nome_professor, p.nome_completo, p.email, p.telefone, 
+            p.endereco, p.data_nascimento, p.cpf, p.data_contratacao, 
+            p.salario_atual, id
+        ],
+    )?;
+    Ok(())
+}
+
+// -- Função para remover um professor --
+pub fn remover_professor_db(conn: &Connection, id: i32) -> Result<()> {
+    conn.execute("DELETE FROM Professor WHERE id_professor = ?1", params![id])?;
+    Ok(())
+}
+
+
+
+// =====================================
+
+// =========== 
