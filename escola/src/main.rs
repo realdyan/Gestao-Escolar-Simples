@@ -3,12 +3,14 @@ use std::io;
 
 
 use crate::mods::cadastros;
-use crate::db;
-use crate::utils;
+use crate::db::inicializar_db;
 
 
 // ============= Módulos =============
 pub mod mods;
+pub mod db;
+pub mod utils;
+
 /*
 pub mod cadastros; 
 pub mod matriculas;
@@ -25,6 +27,9 @@ pub mod outras_opcoes;
 fn main() {
     println!("Bem vindo a Escola X!");    
     println!("\n");
+
+    // Inicializa o banco de dados
+   let conn = inicializar_db().expect("Falha ao inicializar o banco de dados");
 
     // -- Menu Principal --
     loop { // Loop do Menu Principal
@@ -59,7 +64,7 @@ fn main() {
         // 1. Cadastros
         1 => {
             loop { // Loop do Menu de Cadastros
-                cadastros::exibir_menu_cadastros();
+                cadastros::exibir_menu_cadastros(&conn);
                 break;
             }
         }
