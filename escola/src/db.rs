@@ -1,9 +1,9 @@
 use rusqlite::{params, Connection, Result};
 
 // Importa a struct Escola do módulo cadastros
-use crate::mods::cadastros::{Escola, Professor};
+use crate::mods::cadastros::{Escola, Professor, Aluno, Curso, Turma};
 
-
+// =========== INICIALIZAÇÃO DO BANCO DE DADOS ===========
 pub fn inicializar_db() -> Result<Connection> {
     let conn = Connection::open("escola.db")?;
 
@@ -79,6 +79,14 @@ pub fn inicializar_db() -> Result<Connection> {
                   )",
         [],
     )?;
+    // Insere níveis padrão
+    conn.execute(
+        "INSERT OR IGNORE INTO Nivel (id_nivel, nome_nivel, descricao) VALUES 
+         (1, 'Básico', 'Nível Básico'),
+         (2, 'Intermediário', 'Nível Intermediário'),
+         (3, 'Avançado', 'Nível Avançado')",
+        [],
+    )?;
 
     // Tabela Disciplina
     conn.execute(
@@ -142,6 +150,7 @@ pub fn inicializar_db() -> Result<Connection> {
 
 // =========== CADASTRO / ALTERAÇÃO / REMOÇÃO / LISTAGEM ===========
 
+// ==================================================
 // ESCOLA (CADASTRO / ALTERAÇÃO / REMOÇÃO / LISTAGEM)
 
 // Função para inserir uma nova escola no db
@@ -269,6 +278,183 @@ pub fn remover_professor_db(conn: &Connection, id: i32) -> Result<()> {
 
 
 
-// =====================================
+// ==================================================
 
-// =========== 
+// ==================================================
+// ALUNOS (CADASTRO / ALTERAÇÃO / REMOÇÃO / LISTAGEM)
+
+
+// -- Função para inserir um novo aluno no db --
+pub fn inserir_aluno(conn: &Connection, a: &Aluno) -> Result<()> {
+    conn.execute(
+        "INSERT INTO Aluno (nome_aluno, nomecompleto_aluno, email, telefone, endereco, 
+         data_nascimento, cpf, data_matricula) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+        params![a.nome_aluno, a.nome_completo, a.email, a.telefone, a.endereco, a.data_nascimento, a.cpf, a.data_matricula],
+    )?;
+    Ok(())
+}
+
+// -- Função para listar Alunos --
+pub fn listar_alunos_db(conn: &Connection) -> Result<Vec<Aluno>> {
+    let mut stmt = conn.prepare("SELECT id_aluno, nome_aluno, email, cpf, data_matricula FROM Aluno")?;
+    let aluno_iter = stmt.query_map([], |row| {
+        Ok(Aluno {
+            id_aluno: Some(row.get(0)?),
+            nome_aluno: row.get(1)?,
+            nome_completo: String::new(), // Resumido para a lista
+            email: row.get(2)?,
+            telefone: String::new(),
+            endereco: String::new(),
+            data_nascimento: String::new(),
+            cpf: row.get(3)?,
+            data_matricula: row.get(4)?,
+        })
+    })?;
+    let mut alunos = Vec::new();
+    for a in aluno_iter { alunos.push(a?); } // Adiciona cada aluno ao vetor
+    Ok(alunos)
+}
+
+// -- Função para atualizar os dados de um aluno existente --
+pub fn atualizar_aluno_db(conn: &Connection, id: i32, a: &Aluno) -> Result<()> {
+    conn.execute(
+        "UPDATE Aluno SET nome_aluno=?1, nomecompleto_aluno=?2, email=?3, telefone=?4, 
+         endereco=?5, data_nascimento=?6, cpf=?7, data_matricula=?8 WHERE id_aluno=?9",
+        params![a.nome_aluno, a.nome_completo, a.email, a.telefone, a.endereco, a.data_nascimento, a.cpf, a.data_matricula, id],
+    )?;
+    Ok(())
+}
+
+// -- Função para remover um aluno --
+pub fn remover_aluno_db(conn: &Connection, id: i32) -> Result<()> {
+    conn.execute("DELETE FROM Aluno WHERE id_aluno = ?1", params![id])?;
+    Ok(())
+}
+
+
+// ==================================================
+
+// ==================================================
+// CURSOS (CADASTRO / ALTERAÇÃO / REMOÇÃO / LISTAGEM)
+
+// -- Função para inserir um novo curso no db --
+pub fn inserir_curso(conn: &Connection, c: &Curso) -> Result<()> {
+    conn.execute(
+        "INSERT INTO Curso (nome_curso, descricao, duracao_horas) VALUES (?1, ?2, ?3)",
+        params![c.nome_curso, c.descricao, c.duracao_horas],
+    )?;
+    Ok(())
+}
+
+// -- Função para listar Cursos --
+pub fn listar_cursos_db(conn: &Connection) -> Result<Vec<Curso>> {
+    let mut stmt = conn.prepare("SELECT id_curso, nome_curso, descricao, duracao_horas FROM Curso")?;
+    let curso_iter = stmt.query_map([], |row| {
+        Ok(Curso {
+            id_curso: Some(row.get(0)?),
+            nome_curso: row.get(1)?,
+            descricao: row.get(2)?,
+            duracao_horas: row.get(3)?,
+        })
+    })?;
+
+    let mut cursos = Vec::new();
+    for c in curso_iter { cursos.push(c?); }
+    Ok(cursos)
+}
+
+// -- Função para atualizar os dados de um curso existente --
+pub fn atualizar_curso_db(conn: &Connection, id: i32, c: &Curso) -> Result<()> {
+    conn.execute(
+        "UPDATE Curso SET nome_curso = ?1, descricao = ?2, duracao_horas = ?3 
+         WHERE id_curso = ?4",
+        params![c.nome_curso, c.descricao, c.duracao_horas, id],
+    )?;
+    Ok(())
+}
+
+// -- Função para remover um curso do banco de dados --
+pub fn remover_curso_db(conn: &Connection, id: i32) -> Result<()> {
+    // O SQLite irá executar o DELETE baseado no ID fornecido
+    match conn.execute("DELETE FROM Curso WHERE id_curso = ?1", params![id]) {
+        Ok(removidos) => {
+            if removidos > 0 {
+                println!("Sucesso: {} curso(s) removido(s).", removidos);
+            } else {
+                println!("Aviso: Nenhum curso encontrado com o ID {}.", id);
+            }
+            Ok(())
+        }
+        Err(e) => Err(e),
+    }
+}
+
+// ==================================================
+// TURMAS (CADASTRO / ALTERAÇÃO / REMOÇÃO / LISTAGEM)
+
+pub fn inserir_turma(conn: &Connection, t: &Turma) -> Result<()> {
+    conn.execute(
+        "INSERT INTO Turma (nome_turma, id_curso, ano, semestre) VALUES (?1, ?2, ?3, ?4)",
+        params![t.nome_turma, t.id_curso, t.ano, t.semestre],
+    )?;
+    Ok(())
+}
+
+pub fn listar_turmas_db(conn: &Connection) -> Result<Vec<Turma>> {
+    let mut stmt = conn.prepare("SELECT id_turma, nome_turma, id_curso, ano, semestre FROM Turma")?;
+    let turma_iter = stmt.query_map([], |row| {
+        Ok(Turma {
+            id_turma: Some(row.get(0)?),
+            nome_turma: row.get(1)?,
+            id_curso: row.get(2)?,
+            ano: row.get(3)?,
+            semestre: row.get(4)?,
+        })
+    })?;
+
+    let mut turmas = Vec::new();
+    for t in turma_iter { turmas.push(t?); }
+    Ok(turmas)
+}
+
+pub fn atualizar_turma_db(conn: &Connection, id: i32, t: &Turma) -> Result<()> {
+    conn.execute(
+        "UPDATE Turma SET nome_turma = ?1, id_curso = ?2, ano = ?3, semestre = ?4 WHERE id_turma = ?5",
+        params![t.nome_turma, t.id_curso, t.ano, t.semestre, id],
+    )?;
+    Ok(())
+}
+
+pub fn remover_turma_db(conn: &Connection, id: i32) -> Result<()> {
+    conn.execute("DELETE FROM Turma WHERE id_turma = ?1", params![id])?;
+    Ok(())
+}
+
+// ==================================================
+// MATRÍCULAS (CADASTRO / ALTERAÇÃO / REMOÇÃO / LISTAGEM
+
+// -- Função para inserir uma nova matrícula no db --
+pub fn inserir_matricula(conn: &Connection, m: &Matricula) -> Result<()> {
+    conn.execute(
+        "INSERT INTO Matricula (id_aluno, id_turma, data_matricula, status) VALUES (?1, ?2, ?3, ?4)",
+        params![m.id_aluno, m.id_turma, m.data_matricula, m.status],
+    )?;
+    Ok(())
+}
+
+// -- Função para listar Matrículas --
+pub fn listar_matriculas_db(conn: &Connection) -> Result<Vec<Matricula>> {
+    let mut stmt = conn.prepare("SELECT id_matricula, id_aluno, id_turma, data_matricula, status FROM Matricula")?;
+    let mat_iter = stmt.query_map([], |row| {
+        Ok(Matricula {
+            id_matricula: Some(row.get(0)?),
+            id_aluno: row.get(1)?,
+            id_turma: row.get(2)?,
+            data_matricula: row.get(3)?,
+            status: row.get(4)?,
+        })
+    })?;
+    let mut lista = Vec::new();
+    for m in mat_iter { lista.push(m?); }
+    Ok(lista)
+}
