@@ -1,0 +1,186 @@
+export struct TurmaRow {
+    id: int,
+    nome: string,
+    id_curso: int,
+    nome_curso: string,
+    ano: int,
+    semestre: int,
+}
+
+export component TurmasScreen inherits Rectangle {
+    in-out property <string> modo: "listar";
+    in-out property <[TurmaRow]> dados: [];
+    
+    in-out property <int> form_id: -1;
+    in-out property <string> form_nome: "";
+    in-out property <string> form_ano: "";
+    in-out property <string> form_semestre: "";
+    in-out property <string> form_id_curso: "";
+    
+    callback atualizar();
+    callback salvar();
+    callback editar(int);
+    callback deletar(int);
+    
+    background: #f5f5f5;
+    
+    VerticalLayout {
+        padding: 20px;
+        spacing: 15px;
+        
+        HorizontalLayout {
+            spacing: 10px;
+            Text { text: "👥 Gestão de Turmas"; font-size: 22px; font-weight: 700; color: #2c3e50; }
+            Rectangle { }
+            Rectangle {
+                width: 120px; height: 35px;
+                background: btn_novo.has-hover ? #27ae60 : #2ecc71;
+                border-radius: 5px;
+                btn_novo := TouchArea {
+                    clicked => {
+                        modo = "cadastrar";
+                        form_id = -1;
+                        form_nome = ""; form_ano = ""; form_semestre = ""; form_id_curso = "";
+                    }
+                }
+                Text { text: "➕ Novo"; color: white; font-weight: 600; vertical-alignment: center; horizontal-alignment: center; }
+            }
+            Rectangle {
+                width: 130px; height: 35px;
+                background: btn_at.has-hover ? #2980b9 : #3498db;
+                border-radius: 5px;
+                btn_at := TouchArea { clicked => { atualizar(); } }
+                Text { text: "🔄 Atualizar"; color: white; font-weight: 600; vertical-alignment: center; horizontal-alignment: center; }
+            }
+        }
+        
+        Rectangle { height: 1px; background: #bdc3c7; }
+        
+        if modo == "listar": Rectangle {
+            background: white;
+            border-radius: 8px;
+            
+            VerticalLayout {
+                padding: 20px;
+                spacing: 10px;
+                
+                Text { text: "Total: " + dados.length; font-size: 16px; font-weight: 600; color: #7f8c8d; }
+                
+                Rectangle {
+                    height: 40px;
+                    background: #ecf0f1;
+                    border-radius: 5px;
+                    HorizontalLayout {
+                        padding: 10px;
+                        Text { text: "ID"; font-weight: 700; width: 50px; }
+                        Text { text: "Nome"; font-weight: 700; width: 150px; }
+                        Text { text: "Curso"; font-weight: 700; width: 200px; }
+                        Text { text: "Ano"; font-weight: 700; width: 80px; }
+                        Text { text: "Semestre"; font-weight: 700; width: 100px; }
+                        Text { text: "Ações"; font-weight: 700; }
+                    }
+                }
+                
+                for item in dados: Rectangle {
+                    height: 45px;
+                    background: #ffffff;
+                    border-width: 1px;
+                    border-color: #ecf0f1;
+                    border-radius: 5px;
+                    
+                    HorizontalLayout {
+                        padding: 10px;
+                        Text { text: item.id; width: 50px; color: #7f8c8d; }
+                        Text { text: item.nome; width: 150px; color: #2c3e50; font-weight: 600; }
+                        Text { text: item.nome_curso; width: 200px; color: #34495e; }
+                        Text { text: item.ano; width: 80px; color: #e67e22; font-weight: 600; }
+                        Text { text: item.semestre + "º"; width: 100px; color: #e67e22; }
+                        
+                        HorizontalLayout {
+                            spacing: 5px;
+                            Rectangle {
+                                width: 70px; height: 28px;
+                                background: be.has-hover ? #f39c12 : #f1c40f;
+                                border-radius: 3px;
+                                be := TouchArea { clicked => { editar(item.id); } }
+                                Text { text: "✏️ Editar"; font-size: 12px; vertical-alignment: center; horizontal-alignment: center; }
+                            }
+                            Rectangle {
+                                width: 80px; height: 28px;
+                                background: bd.has-hover ? #c0392b : #e74c3c;
+                                border-radius: 3px;
+                                bd := TouchArea { clicked => { deletar(item.id); } }
+                                Text { text: "🗑️ Deletar"; color: white; font-size: 12px; vertical-alignment: center; horizontal-alignment: center; }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        if modo == "cadastrar" || modo == "editar": Rectangle {
+            background: white;
+            border-radius: 8px;
+            
+            VerticalLayout {
+                padding: 20px;
+                spacing: 15px;
+                
+                Text {
+                    text: modo == "cadastrar" ? "➕ Cadastrar Nova Turma" : "✏️ Editar Turma";
+                    font-size: 18px; font-weight: 600; color: #2c3e50;
+                }
+                
+                GridLayout {
+                    spacing: 15px;
+                    Row {
+                        Text { text: "Nome da Turma:"; color: #2c3e50; font-weight: 600; }
+                        Rectangle {
+                            height: 40px; background: white; border-width: 1px; border-color: #bdc3c7; border-radius: 5px;
+                            HorizontalLayout { padding-left: 10px; padding-right: 10px; TextInput { text <=> form_nome; font-size: 14px; vertical-alignment: center;  color: #000000;} }
+                        }
+                    }
+                    Row {
+                        Text { text: "ID do Curso:"; color: #2c3e50; font-weight: 600; }
+                        Rectangle {
+                            height: 40px; background: white; border-width: 1px; border-color: #bdc3c7; border-radius: 5px;
+                            HorizontalLayout { padding-left: 10px; padding-right: 10px; TextInput { text <=> form_id_curso; font-size: 14px; vertical-alignment: center;  color: #000000;} }
+                        }
+                    }
+                    Row {
+                        Text { text: "Ano:"; color: #2c3e50; font-weight: 600; }
+                        Rectangle {
+                            height: 40px; background: white; border-width: 1px; border-color: #bdc3c7; border-radius: 5px;
+                            HorizontalLayout { padding-left: 10px; padding-right: 10px; TextInput { text <=> form_ano; font-size: 14px; vertical-alignment: center;  color: #000000;} }
+                        }
+                    }
+                    Row {
+                        Text { text: "Semestre:"; color: #2c3e50; font-weight: 600; }
+                        Rectangle {
+                            height: 40px; background: white; border-width: 1px; border-color: #bdc3c7; border-radius: 5px;
+                            HorizontalLayout { padding-left: 10px; padding-right: 10px; TextInput { text <=> form_semestre; font-size: 14px; vertical-alignment: center;  color: #000000;} }
+                        }
+                    }
+                }
+                
+                HorizontalLayout {
+                    spacing: 10px;
+                    Rectangle {
+                        width: 120px; height: 40px;
+                        background: bs.has-hover ? #27ae60 : #2ecc71;
+                        border-radius: 5px;
+                        bs := TouchArea { clicked => { salvar(); } }
+                        Text { text: "💾 Salvar"; color: white; font-weight: 600; vertical-alignment: center; horizontal-alignment: center; }
+                    }
+                    Rectangle {
+                        width: 120px; height: 40px;
+                        background: bc.has-hover ? #95a5a6 : #bdc3c7;
+                        border-radius: 5px;
+                        bc := TouchArea { clicked => { modo = "listar"; } }
+                        Text { text: "❌ Cancelar"; color: #2c3e50; font-weight: 600; vertical-alignment: center; horizontal-alignment: center; }
+                    }
+                }
+            }
+        }
+    }
+}

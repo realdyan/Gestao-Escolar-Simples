@@ -1,0 +1,40 @@
+import { EscolaRow } from "escolas.slint";
+
+export component HomeScreen inherits Rectangle {
+    in-out property <[EscolaRow]> escolas: [];
+    in-out property <int> id_ativa: 0;
+    callback selecionar(int, string);
+
+    background: white;
+    VerticalLayout {
+        padding: 40px;
+        alignment: center;
+        spacing: 25px;
+
+        Text { text: "X Ninjas | Gestão Escolar"; font-size: 32px; font-weight: 800; horizontal-alignment: center; color: #2c3e50; }
+        Text { text: "Selecione a unidade de trabalho atual:"; font-size: 18px; horizontal-alignment: center; color: #7f8c8d; }
+
+        Rectangle {
+            height: 350px;
+            VerticalLayout {
+                spacing: 12px;
+                for escola in escolas : Rectangle {
+                    height: 70px;
+                    background: id_ativa == escola.id ? #e3f2fd : #f8f9fa;
+                    border-radius: 10px;
+                    border-width: id_ativa == escola.id ? 2px : 1px;
+                    border-color: id_ativa == escola.id ? #3498db : #ecf0f1;
+                    
+                    TouchArea { clicked => { selecionar(escola.id, escola.nome); } }
+                    
+                    HorizontalLayout {
+                        padding: 20px;
+                        Text { text: escola.nome; font-size: 18px; font-weight: 600; vertical-alignment: center; color: #2c3e50; }
+                        Rectangle { }
+                        if id_ativa == escola.id : Text { text: "UNIDADE ATIVA"; color: #2ecc71; font-weight: 800; vertical-alignment: center; }
+                    }
+                }
+            }
+        }
+    }
+}

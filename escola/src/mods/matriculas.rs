@@ -1,56 +1,49 @@
-use crate::utils;
+use slint::{ComponentHandle, ModelRc, VecModel};
+use crate::db;
+use std::rc::Rc;
+use std::cell::RefCell;
 use rusqlite::Connection;
 
-pub struct Matricula {
-    pub id_matricula: Option<i32>,
-    pub id_aluno: i32,
-    pub id_turma: i32,
-    pub data_matricula: String,
-    pub status: String,
+pub fn setup(ui: &crate::MainWindow, conn: Rc<RefCell<Connection>>) {
+    let ui_weak = ui.as_weak();
+    let conn_save = conn.clone();
+
+    // SALVAR NOVA MATRÍCULA
+    ui.on_matricula_salvar(move || {
+        if let Some(ui) = ui_weak.upgrade() {
+            let id_escola = ui.get_id_escola_ativa();
+            let id_aluno = ui.get_matricula_form_id_aluno().to_string().parse().unwrap_or(0);
+            let id_turma = ui.get_matricula_form_id_turma().to_string().parse().unwrap_or(0);
+            let data = ui.get_matricula_form_data().to_string();
+
+            if db::inserir_matricula(&conn_save.borrow(), id_escola, id_aluno, id_turma, &data).is_ok() {
+                ui.set_matricula_modo("listar".into());
+                carregar(&ui, &conn_save.borrow(), id_escola);
+            }
+        }
+    });
+
+    // ELIMINAR MATRÍCULA (Ativa a função remover_matricula no db.rs)
+    let ui_del = ui.as_weak();
+    let conn_del = conn.clone();
+    ui.on_matricula_deletar(move |id| {
+        if let Some(ui) = ui_del.upgrade() {
+            let id_escola = ui.get_id_escola_ativa();
+            let _ = db::remover_matricula(&conn_del.borrow(), id);
+            carregar(&ui, &conn_del.borrow(), id_escola);
+        }
+    });
 }
 
-pub fn exibir_menu_matriculas(conn: &Connection) {
-    loop {
-        println!("\n--- Gerenciamento de Matrículas ---");
-        println!("1 - Realizar Nova Matrícula");
-        println!("2 - Listar Matrículas");
-        println!("3 - Cancelar/Alterar Status");
-        println!("0 - Voltar");
-
-        let opcao = utils::ler_inteiro("Escolha uma opção");
-
-        match opcao {
-            1 => {
-                println!("\n--- Nova Matrícula ---");
-                let id_aluno = utils::ler_inteiro("ID do Aluno");
-                let id_turma = utils::ler_inteiro("ID da Turma");
-                let data = utils::ler_entrada("Data (DD/MM/AAAA)");
-                
-                let m = Matricula {
-                    id_matricula: None,
-                    id_aluno,
-                    id_turma,
-                    data_matricula: data,
-                    status: String::from("Ativo"),
-                };
-
-                match crate::db::inserir_matricula(conn, &m) {
-                    Ok(_) => println!("Sucesso: Aluno matriculado!"),
-                    Err(e) => println!("Erro: Verifique se o ID do Aluno e da Turma existem. ({})", e),
-                }
-                utils::esperar_enter();
-            }
-            2 => {
-                if let Ok(matriculas) = crate::db::listar_matriculas_db(conn) {
-                    for m in matriculas {
-                        println!("Matrícula ID: {} | Aluno ID: {} | Turma ID: {} | Status: {}", 
-                            m.id_matricula.unwrap_or(0), m.id_aluno, m.id_turma, m.status);
-                    }
-                }
-                utils::esperar_enter();
-            }
-            0 => break,
-            _ => println!("Opção inválida!"),
-        }
+pub fn carregar(ui: &crate::MainWindow, conn: &Connection, id_escola: i32) {
+    if let Ok(matriculas) = db::listar_matriculas(conn, id_escola) {
+        let rows: Vec<crate::MatriculaRow> = matriculas.into_iter().map(|m| crate::MatriculaRow {
+            id: m.id_matricula,
+            aluno_nome: m.nome_aluno.into(),
+            turma_nome: m.nome_turma.into(),
+            data: m.data_matricula.into(),
+            status: m.status.into(),
+        }).collect();
+        ui.set_matriculas_dados(ModelRc::from(Rc::new(VecModel::from(rows))));
     }
 }

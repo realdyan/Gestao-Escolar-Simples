@@ -1,0 +1,88 @@
+import { EscolaRow } from "../screens/escolas.slint";
+
+export component HeaderBarMinimal inherits Rectangle {
+    in-out property <string> unidade-nome: "Sem unidade";
+    
+    // Callbacks
+    callback abrir-seletor-unidades(); 
+    callback ir-home();
+    callback sair();
+    
+    height: 50px;
+    background: @linear-gradient(90deg, #3498db 0%, #2980b9 100%);
+    z: 100; 
+
+    HorizontalLayout {
+        padding-left: 15px;
+        padding-right: 15px;
+        spacing: 15px;
+        
+        // Botão Home
+        Rectangle {
+            width: 35px;
+            height: 35px;
+            background: btn-home.has-hover ? rgba(255, 255, 255, 0.2) : transparent;
+            border-radius: 5px;
+            
+            btn-home := TouchArea { clicked => { ir-home(); } }
+            
+            Text {
+                text: "🏠";
+                font-size: 18px;
+                color: white;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+        }
+
+        Text {
+            text: "X School";
+            font-size: 18px;
+            font-weight: 800;
+            color: white;
+            vertical-alignment: center;
+        }
+        
+        Rectangle { } 
+        
+        // Seletor que agora redireciona para a página de Entidades
+        Rectangle {
+            width: 320px;
+            height: 32px;
+            background: area-unidade.has-hover ? rgba(255, 255, 255, 0.3) : rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            
+            area-unidade := TouchArea {
+                clicked => { abrir-seletor-unidades(); }
+            }
+
+            HorizontalLayout {
+                padding-left: 12px;
+                padding-right: 12px;
+                Text {
+                    text: "Unidade Atual: " + unidade-nome;
+                    color: white;
+                    font-size: 13px;
+                    font-weight: 600;
+                    vertical-alignment: center;
+                }
+                Rectangle { }
+                Text {
+                    text: "🔄";
+                    color: white;
+                    vertical-alignment: center;
+                }
+            }
+        }
+        
+        // Botão de Sair
+        Rectangle {
+            width: 32px;
+            height: 32px;
+            background: btn-sair.has-hover ? rgba(231, 76, 60, 0.4) : transparent;
+            border-radius: 16px;
+            btn-sair := TouchArea { clicked => { sair(); } }
+            Text { text: "✕"; color: white; font-size: 16px; vertical-alignment: center; horizontal-alignment: center; }
+        }
+    }
+}

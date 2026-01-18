@@ -1,0 +1,261 @@
+import { NavBar, SubMenuCadastros } from "components/navbar.slint";
+import { HeaderBarMinimal } from "components/headerbar.slint";
+import { EntidadesScreen } from "components/entidades.slint"; // Importação nova
+import { AlunosScreen, AlunoRow } from "screens/alunos.slint";
+import { EscolasScreen, EscolaRow } from "screens/escolas.slint";
+import { ProfessoresScreen, ProfessorRow } from "screens/professores.slint";
+import { CursosScreen, CursoRow } from "screens/cursos.slint";
+import { TurmasScreen, TurmaRow } from "screens/turmas.slint";
+import { DisciplinasScreen, DisciplinaRow } from "screens/disciplinas.slint";
+import { MatriculasScreen, MatriculaRow } from "screens/matriculas.slint";
+import { HomeScreen } from "screens/home.slint";
+
+export { AlunoRow, EscolaRow, ProfessorRow, CursoRow, TurmaRow, DisciplinaRow, MatriculaRow }
+
+export component MainWindow inherits Window {
+    title: "ERP Pro - Gestão Escolar Modular";
+    preferred-width: 1200px;
+    preferred-height: 800px;
+    
+    in-out property <string> tela-ativa: "home";
+    in-out property <string> entidade-ativa: "";
+    in-out property <bool> submenu-cadastros-visivel: false;
+    
+    in-out property <int> id-escola-ativa: 1; 
+    in-out property <string> nome-escola-ativa: "Selecione uma Unidade";
+    in-out property <[EscolaRow]> lista-escolas-selecao: [];
+
+    callback selecionar-escola(int, string);
+    callback fechar-app();
+
+    // ==========================================
+    // PROPRIEDADES DE TODOS OS MÓDULOS (MANTIDO ÍNTEGRO)
+    // ==========================================
+    
+    // ESCOLAS
+    in-out property <[EscolaRow]> escolas-dados: [];
+    in-out property <string> escola-modo: "listar";
+    in-out property <int> escola-form-id: -1;
+    in-out property <string> escola-form-nome: "";
+    in-out property <string> escola-form-email: "";
+    in-out property <string> escola-form-telefone: "";
+    in-out property <string> escola-form-endereco: "";
+    in-out property <string> escola-form-website: "";
+    callback escola-atualizar(); callback escola-salvar(); callback escola-editar(int); callback escola-deletar(int);
+
+    // PROFESSORES
+    in-out property <[ProfessorRow]> professores-dados: [];
+    in-out property <string> professor-modo: "listar";
+    in-out property <int> professor-form-id: -1;
+    in-out property <string> professor-form-nome: "";
+    in-out property <string> professor-form-nome-completo: "";
+    in-out property <string> professor-form-email: "";
+    in-out property <string> professor-form-telefone: "";
+    in-out property <string> professor-form-endereco: "";
+    in-out property <string> professor-form-cpf: "";
+    in-out property <string> professor-form-data-nasc: "";
+    in-out property <string> professor-form-data-contrat: "";
+    in-out property <string> professor-form-salario: "";
+    callback professor-atualizar(); callback professor-salvar(); callback professor-editar(int); callback professor-deletar(int);
+
+    // ALUNOS
+    in-out property <[AlunoRow]> alunos-dados: [];
+    in-out property <string> aluno-modo: "listar";
+    in-out property <int> aluno-form-id: -1;
+    in-out property <string> aluno-form-nome: "";
+    in-out property <string> aluno-form-nome-completo: "";
+    in-out property <string> aluno-form-email: "";
+    in-out property <string> aluno-form-telefone: "";
+    in-out property <string> aluno-form-endereco: "";
+    in-out property <string> aluno-form-cpf: "";
+    in-out property <string> aluno-form-data-nasc: "";
+    in-out property <string> aluno-form-data-matricula: "";
+    in-out property <int> aluno-pagina-atual: 1;
+    in-out property <int> aluno-total-paginas: 1;
+    in-out property <int> aluno-total-registros: 0;
+    in-out property <string> aluno-filtro: "";
+    in-out property <string> alunos-filtro-nome: "";
+    in-out property <string> alunos-filtro-cpf: "";
+    in-out property <string> alunos-filtro-email: "";
+    in-out property <string> alunos-filtro-telefone: "";
+    in-out property <string> alunos-filtro-data-inicio: "";
+    in-out property <string> alunos-filtro-data-fim: "";
+    callback aluno-atualizar();
+    callback aluno-salvar-cadastro(string, string, string, string, string, string, string, string);
+    callback aluno-salvar-edicao(int, string, string, string, string, string, string, string, string);
+    callback aluno-editar(int); callback aluno-deletar(int);
+    callback aluno-ir-pagina(int); callback aluno-aplicar-filtro(string); callback aluno-limpar-filtro();
+    callback alunos-aplicar-filtro-avancado(string, string, string, string, string, string);
+    callback alunos-limpar-filtro-avancado();
+
+    // CURSOS
+    in-out property <[CursoRow]> cursos-dados: [];
+    in-out property <string> curso-modo: "listar";
+    in-out property <int> curso-form-id: -1;
+    in-out property <string> curso-form-nome: "";
+    in-out property <string> curso-form-descricao: "";
+    in-out property <string> curso-form-duracao: "0";
+    callback curso-atualizar(); callback curso-salvar(); callback curso-editar(int); callback curso-deletar(int);
+
+    // TURMAS
+    in-out property <[TurmaRow]> turmas-dados: [];
+    in-out property <string> turma-modo: "listar";
+    in-out property <int> turma-form-id: -1;
+    in-out property <string> turma-form-nome: "";
+    in-out property <string> turma-form-id-curso: "0";
+    in-out property <string> turma-form-ano: "2026";
+    in-out property <string> turma-form-semestre: "1";
+    callback turma-atualizar(); callback turma-salvar(); callback turma-editar(int); callback turma-deletar(int);
+
+    // DISCIPLINAS
+    in-out property <[DisciplinaRow]> disciplinas-dados: [];
+    in-out property <string> disciplina-modo: "listar";
+    in-out property <int> disciplina-form-id: -1;
+    in-out property <string> disciplina-form-nome: "";
+    in-out property <string> disciplina-form-descricao: "";
+    in-out property <string> disciplina-form-carga: "0";
+    callback disciplina-atualizar(); callback disciplina-salvar(); callback disciplina-editar(int); callback disciplina-deletar(int);
+
+    // MATRÍCULAS
+    in-out property <[MatriculaRow]> matriculas-dados: [];
+    in-out property <string> matricula-modo: "listar";
+    in-out property <string> matricula-form-id-aluno: "";
+    in-out property <string> matricula-form-id-turma: "";
+    in-out property <string> matricula-form-data: "";
+    callback matricula-salvar(); callback matricula-deletar(int);
+
+    background: #ecf0f1;
+    
+    VerticalLayout {
+        HeaderBarMinimal {
+            unidade-nome: nome-escola-ativa;
+            // Ao clicar no nome da escola, abre a tela de entidades
+            abrir-seletor-unidades => {
+                tela-ativa = "entidades";
+                submenu-cadastros-visivel = false;
+            }
+            ir-home => { tela-ativa = "home"; submenu-cadastros-visivel = false; }
+            sair => { fechar-app(); }
+        }
+
+        NavBar {
+            menu-clicked(menu) => {
+                if menu == "cadastros" {
+                    submenu-cadastros-visivel = !submenu-cadastros-visivel;
+                } else {
+                    tela-ativa = menu;
+                    submenu-cadastros-visivel = false;
+                }
+            }
+        }
+        
+        Rectangle {
+            if submenu-cadastros-visivel: SubMenuCadastros {
+                x: 10px; y: 0px; z: 200;
+                item-clicked(item) => {
+                    tela-ativa = "cadastros";
+                    entidade-ativa = item;
+                    submenu-cadastros-visivel = false;
+                }
+            }
+            
+            VerticalLayout {
+                // TELA DE SELEÇÃO DE ENTIDADES (NOVA)
+                if tela-ativa == "entidades" : EntidadesScreen {
+                    escolas: lista-escolas-selecao;
+                    id-ativa: id-escola-ativa;
+                    selecionar(id, nome) => {
+                        selecionar-escola(id, nome);
+                        tela-ativa = "home"; // Volta para a dashboard após selecionar
+                    }
+                }
+
+                // DASHBOARD
+                if tela-ativa == "home" || tela-ativa == "" : HomeScreen {
+                    escolas: lista-escolas-selecao;
+                    id_ativa: id-escola-ativa;
+                    selecionar(id, nome) => { selecionar-escola(id, nome) }
+                }
+
+                // ALUNOS
+                if tela-ativa == "cadastros" && entidade-ativa == "alunos": AlunosScreen {
+                    modo <=> aluno-modo; dados: alunos-dados;
+                    form-id <=> aluno-form-id; form-nome <=> aluno-form-nome;
+                    form-nome-completo <=> aluno-form-nome-completo; form-email <=> aluno-form-email;
+                    form-telefone <=> aluno-form-telefone; form-endereco <=> aluno-form-endereco;
+                    form-cpf <=> aluno-form-cpf; form-data-nasc <=> aluno-form-data-nasc;
+                    form-data-matricula <=> aluno-form-data-matricula;
+                    pagina-atual <=> aluno-pagina-atual; total-paginas <=> aluno-total-paginas;
+                    total-registros <=> aluno-total-registros; filtro <=> aluno-filtro;
+                    filtro-nome <=> alunos-filtro-nome; filtro-cpf <=> alunos-filtro-cpf;
+                    filtro-email <=> alunos-filtro-email; filtro-telefone <=> alunos-filtro-telefone;
+                    filtro-data-inicio <=> alunos-filtro-data-inicio; filtro-data-fim <=> alunos-filtro-data-fim;
+                    salvar-cadastro(n, nc, e, t, en, c, dn, dm) => { aluno-salvar-cadastro(n, nc, e, t, en, c, dn, dm) }
+                    salvar-edicao(id, n, nc, e, t, en, c, dn, dm) => { aluno-salvar-edicao(id, n, nc, e, t, en, c, dn, dm) }
+                    editar(id) => { aluno-editar(id) } deletar(id) => { aluno-deletar(id) } atualizar => { aluno-atualizar() }
+                    ir-pagina(p) => { aluno-ir-pagina(p) } aplicar-filtro(f) => { aluno-aplicar-filtro(f) }
+                    limpar-filtro() => { aluno-limpar-filtro() }
+                    aplicar-filtro-avancado(n, c, e, t, di, df) => { alunos-aplicar-filtro-avancado(n, c, e, t, di, df) }
+                    limpar-filtro-avancado() => { alunos-limpar-filtro-avancado() }
+                }
+
+                // PROFESSORES
+                if tela-ativa == "cadastros" && entidade-ativa == "professores": ProfessoresScreen {
+                    modo <=> professor-modo; dados: professores-dados;
+                    form_id <=> professor-form-id; form_nome <=> professor-form-nome;
+                    form_nome_completo <=> professor-form-nome-completo; form_email <=> professor-form-email;
+                    form_telefone <=> professor-form-telefone; form_endereco <=> professor-form-endereco;
+                    form_cpf <=> professor-form-cpf; form_data_nasc <=> professor-form-data-nasc;
+                    form_data_contrat <=> professor-form-data-contrat; form_salario <=> professor-form-salario;
+                    atualizar => { professor-atualizar() } salvar => { professor-salvar() }
+                    editar(id) => { professor-editar(id) } deletar(id) => { professor-deletar(id) }
+                }
+
+                // ESCOLAS
+                if tela-ativa == "cadastros" && entidade-ativa == "escolas": EscolasScreen {
+                    modo <=> escola-modo; dados: escolas-dados;
+                    form_id <=> escola-form-id; form_nome <=> escola-form-nome;
+                    form_email <=> escola-form-email; form_telefone <=> escola-form-telefone;
+                    form_endereco <=> escola-form-endereco; form_website <=> escola-form-website;
+                    atualizar => { escola-atualizar() } salvar => { escola-salvar() }
+                    editar(id) => { escola-editar(id) } deletar(id) => { escola-deletar(id) }
+                }
+
+                // CURSOS
+                if tela-ativa == "cadastros" && entidade-ativa == "cursos": CursosScreen {
+                    modo <=> curso-modo; dados: cursos-dados;
+                    form_id <=> curso-form-id; form_nome <=> curso-form-nome;
+                    form_descricao <=> curso-form-descricao; form_duracao <=> curso-form-duracao;
+                    atualizar => { curso-atualizar() } salvar => { curso-salvar() }
+                    editar(id) => { curso-editar(id) } deletar(id) => { curso-deletar(id) }
+                }
+
+                // TURMAS
+                if tela-ativa == "cadastros" && entidade-ativa == "turmas": TurmasScreen {
+                    modo <=> turma-modo; dados: turmas-dados;
+                    form_id <=> turma-form-id; form_nome <=> turma-form-nome;
+                    form_id_curso <=> turma-form-id-curso; form_ano <=> turma-form-ano;
+                    form_semestre <=> turma-form-semestre;
+                    atualizar => { turma-atualizar() } salvar => { turma-salvar() }
+                    editar(id) => { turma-editar(id) } deletar(id) => { turma-deletar(id) }
+                }
+
+                // DISCIPLINAS
+                if tela-ativa == "cadastros" && entidade-ativa == "disciplinas": DisciplinasScreen {
+                    modo <=> disciplina-modo; dados: disciplinas-dados;
+                    form_id <=> disciplina-form-id; form_nome <=> disciplina-form-nome;
+                    form_descricao <=> disciplina-form-descricao; form_carga <=> disciplina-form-carga;
+                    atualizar => { disciplina-atualizar() } salvar => { disciplina-salvar() }
+                    editar(id) => { disciplina-editar(id) } deletar(id) => { disciplina-deletar(id) }
+                }
+
+                // MATRÍCULAS
+                if tela-ativa == "matriculas": MatriculasScreen {
+                    modo <=> matricula-modo; dados: matriculas-dados;
+                    form_id_aluno <=> matricula-form-id-aluno; form_id_turma <=> matricula-form-id-turma; form_data <=> matricula-form-data;
+                    salvar => { matricula-salvar() } deletar(id) => { matricula-deletar(id) }
+                }
+            }
+        }
+    }
+}

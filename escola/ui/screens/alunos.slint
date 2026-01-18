@@ -1,0 +1,982 @@
+export struct AlunoRow {
+    id: int,
+    nome: string,
+    email: string,
+    cpf: string,
+    telefone: string,
+    data-matricula: string,
+}
+
+export component AlunosScreen inherits Rectangle {
+    in-out property <string> modo: "listar";
+    in-out property <[AlunoRow]> dados: [];
+    
+    // Formulário
+    in-out property <int> form-id: -1;
+    in-out property <string> form-nome: "";
+    in-out property <string> form-nome-completo: "";
+    in-out property <string> form-email: "";
+    in-out property <string> form-telefone: "";
+    in-out property <string> form-endereco: "";
+    in-out property <string> form-cpf: "";
+    in-out property <string> form-data-nasc: "";
+    in-out property <string> form-data-matricula: "";
+    
+    // ✅ NOVO: Paginação e Filtro
+    in-out property <int> pagina-atual: 1;
+    in-out property <int> total-paginas: 1;
+    in-out property <int> total-registros: 0;
+    in-out property <string> filtro: "";
+    property <string> filtro-temp: "";
+    
+    // ✅ NOVO: Filtros avançados
+    in-out property <string> filtro-nome: "";
+    in-out property <string> filtro-cpf: "";
+    in-out property <string> filtro-email: "";
+    in-out property <string> filtro-telefone: "";
+    in-out property <string> filtro-data-inicio: "";
+    in-out property <string> filtro-data-fim: "";
+    
+    // ✅ NOVO: Estado do filtro avançado
+    property <bool> filtro-avancado-visivel: false;
+    
+    // Callbacks
+    callback atualizar();
+    callback salvar-cadastro(string, string, string, string, string, string, string, string);
+    callback salvar-edicao(int, string, string, string, string, string, string, string, string);
+    callback editar(int);
+    callback deletar(int);
+    
+    // ✅ NOVO: Callbacks de paginação
+    callback ir-pagina(int);
+    callback aplicar-filtro(string);
+    callback limpar-filtro();
+    
+    // ✅ NOVO: Callbacks de filtro avançado
+    callback aplicar-filtro-avancado(string, string, string, string, string, string);
+    callback limpar-filtro-avancado();
+    
+    background: #f5f5f5;
+    
+    VerticalLayout {
+        padding: 20px;
+        spacing: 15px;
+        
+        // ==========================================
+        // HEADER COM BOTÕES
+        // ==========================================
+        HorizontalLayout {
+            spacing: 10px;
+            
+            Text {
+                text: "🎒 Gestão de Alunos";
+                font-size: 22px;
+                font-weight: 700;
+                color: #2c3e50;
+            }
+            
+            Rectangle { }
+            
+            Rectangle {
+                width: 120px;
+                height: 35px;
+                background: btn-novo.has-hover ? #27ae60 : #2ecc71;
+                border-radius: 5px;
+                
+                btn-novo := TouchArea {
+                    clicked => {
+                        modo = "cadastrar";
+                        form-id = -1;
+                        form-nome = "";
+                        form-nome-completo = "";
+                        form-email = "";
+                        form-telefone = "";
+                        form-endereco = "";
+                        form-cpf = "";
+                        form-data-nasc = "";
+                        form-data-matricula = "";
+                    }
+                }
+                
+                Text {
+                    text: "➕ Novo";
+                    color: white;
+                    font-weight: 600;
+                    vertical-alignment: center;
+                    horizontal-alignment: center;
+                }
+            }
+            
+            Rectangle {
+                width: 130px;
+                height: 35px;
+                background: btn-at.has-hover ? #2980b9 : #3498db;
+                border-radius: 5px;
+                
+                btn-at := TouchArea {
+                    clicked => {
+                        atualizar();
+                    }
+                }
+                
+                Text {
+                    text: "🔄 Atualizar";
+                    color: white;
+                    font-weight: 600;
+                    vertical-alignment: center;
+                    horizontal-alignment: center;
+                }
+            }
+        }
+        
+        Rectangle {
+            height: 1px;
+            background: #bdc3c7;
+        }
+        
+        // ==========================================
+        // MODO LISTAGEM
+        // ==========================================
+        if modo == "listar": Rectangle {
+            background: white;
+            border-radius: 8px;
+            
+            VerticalLayout {
+                padding: 20px;
+                spacing: 15px;
+                
+                // ✅ NOVO: BARRA DE FILTRO SIMPLES
+                HorizontalLayout {
+                    spacing: 10px;
+                    
+                    Text {
+                        text: "🔍 Buscar:";
+                        color: #2c3e50;
+                        font-weight: 600;
+                        vertical-alignment: center;
+                    }
+                    
+                    Rectangle {
+                        height: 40px;
+                        background: white;
+                        border-width: 2px;
+                        border-color: #3498db;
+                        border-radius: 5px;
+                        
+                        HorizontalLayout {
+                            padding-left: 10px;
+                            padding-right: 10px;
+                            
+                            TextInput {
+                                text <=> filtro-temp;
+                                font-size: 14px;
+                                vertical-alignment: center;
+                                color: #000000;
+                            }
+                        }
+                    }
+                    
+                    Rectangle {
+                        width: 100px;
+                        height: 40px;
+                        background: btn-filtrar.has-hover ? #2980b9 : #3498db;
+                        border-radius: 5px;
+                        
+                        btn-filtrar := TouchArea {
+                            clicked => {
+                                aplicar-filtro(filtro-temp);
+                                filtro-avancado-visivel = false;
+                            }
+                        }
+                        
+                        Text {
+                            text: "Filtrar";
+                            color: white;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                            horizontal-alignment: center;
+                        }
+                    }
+                    
+                    Rectangle {
+                        width: 100px;
+                        height: 40px;
+                        background: btn-limpar.has-hover ? #95a5a6 : #bdc3c7;
+                        border-radius: 5px;
+                        
+                        btn-limpar := TouchArea {
+                            clicked => {
+                                filtro-temp = "";
+                                limpar-filtro();
+                                filtro-avancado-visivel = false;
+                            }
+                        }
+                        
+                        Text {
+                            text: "Limpar";
+                            color: #2c3e50;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                            horizontal-alignment: center;
+                        }
+                    }
+                }
+                
+                // ==========================================
+                // ✅ FILTRO AVANÇADO
+                // ==========================================
+                Rectangle {
+                    height: 50px;
+                    
+                    HorizontalLayout {
+                        spacing: 10px;
+                        
+                        Text {
+                            text: "🎯 Filtro Avançado:";
+                            color: #2c3e50;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                        }
+                        
+                        Rectangle {
+                            width: 150px;
+                            height: 40px;
+                            background: btn-avancado.has-hover ? #9b59b6 : #8e44ad;
+                            border-radius: 5px;
+                            
+                            btn-avancado := TouchArea {
+                                clicked => {
+                                    filtro-avancado-visivel = !filtro-avancado-visivel;
+                                }
+                            }
+                            
+                            Text {
+                                text: filtro-avancado-visivel ? "▲ Avançado" : "▼ Avançado";
+                                color: white;
+                                font-weight: 600;
+                                vertical-alignment: center;
+                                horizontal-alignment: center;
+                            }
+                        }
+                    }
+                }
+                
+                // ==========================================
+                // FORMULÁRIO DE FILTRO AVANÇADO (INLINE)
+                // ==========================================
+                if filtro-avancado-visivel: Rectangle {
+                    background: #f8f9fa;
+                    border-radius: 8px;
+                    border-width: 1px;
+                    border-color: #3498db;
+                    
+                    VerticalLayout {
+                        padding: 15px;
+                        spacing: 10px;
+                        
+                        GridLayout {
+                            spacing: 10px;
+                            
+                            Row {
+                                Text { text: "Nome:"; width: 100px; color: #2c3e50; }
+                                Rectangle {
+                                    height: 35px;
+                                    background: white;
+                                    border-width: 1px;
+                                    border-color: #bdc3c7;
+                                    border-radius: 5px;
+                                    
+                                    HorizontalLayout {
+                                        padding-left: 10px;
+                                        padding-right: 10px;
+                                        
+                                        TextInput {
+                                            text <=> filtro-nome;
+                                            font-size: 14px;
+                                            vertical-alignment: center;
+                                            color: #000000;
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            Row {
+                                Text { text: "CPF:"; width: 100px; color: #2c3e50; }
+                                Rectangle {
+                                    height: 35px;
+                                    background: white;
+                                    border-width: 1px;
+                                    border-color: #bdc3c7;
+                                    border-radius: 5px;
+                                    
+                                    HorizontalLayout {
+                                        padding-left: 10px;
+                                        padding-right: 10px;
+                                        
+                                        TextInput {
+                                            text <=> filtro-cpf;
+                                            font-size: 14px;
+                                            vertical-alignment: center;
+                                            color: #000000;
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            Row {
+                                Text { text: "Email:"; width: 100px; color: #2c3e50; }
+                                Rectangle {
+                                    height: 35px;
+                                    background: white;
+                                    border-width: 1px;
+                                    border-color: #bdc3c7;
+                                    border-radius: 5px;
+                                    
+                                    HorizontalLayout {
+                                        padding-left: 10px;
+                                        padding-right: 10px;
+                                        
+                                        TextInput {
+                                            text <=> filtro-email;
+                                            font-size: 14px;
+                                            vertical-alignment: center;
+                                            color: #000000;
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            Row {
+                                Text { text: "Telefone:"; width: 100px; color: #2c3e50; }
+                                Rectangle {
+                                    height: 35px;
+                                    background: white;
+                                    border-width: 1px;
+                                    border-color: #bdc3c7;
+                                    border-radius: 5px;
+                                    
+                                    HorizontalLayout {
+                                        padding-left: 10px;
+                                        padding-right: 10px;
+                                        
+                                        TextInput {
+                                            text <=> filtro-telefone;
+                                            font-size: 14px;
+                                            vertical-alignment: center;
+                                            color: #000000;
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            Row {
+                                Text { text: "Data Início:"; width: 100px; color: #2c3e50; }
+                                Rectangle {
+                                    height: 35px;
+                                    background: white;
+                                    border-width: 1px;
+                                    border-color: #bdc3c7;
+                                    border-radius: 5px;
+                                    
+                                    HorizontalLayout {
+                                        padding-left: 10px;
+                                        padding-right: 10px;
+                                        
+                                        TextInput {
+                                            text <=> filtro-data-inicio;
+                                            font-size: 14px;
+                                            vertical-alignment: center;
+                                            color: #000000;
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            Row {
+                                Text { text: "Data Fim:"; width: 100px; color: #2c3e50; }
+                                Rectangle {
+                                    height: 35px;
+                                    background: white;
+                                    border-width: 1px;
+                                    border-color: #bdc3c7;
+                                    border-radius: 5px;
+                                    
+                                    HorizontalLayout {
+                                        padding-left: 10px;
+                                        padding-right: 10px;
+                                        
+                                        TextInput {
+                                            text <=> filtro-data-fim;
+                                            font-size: 14px;
+                                            vertical-alignment: center;
+                                            color: #000000;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        HorizontalLayout {
+                            spacing: 10px;
+                            
+                            Rectangle {
+                                width: 120px;
+                                height: 40px;
+                                background: btn-aplicar-avancado.has-hover ? #27ae60 : #2ecc71;
+                                border-radius: 5px;
+                                
+                                btn-aplicar-avancado := TouchArea {
+                                    clicked => {
+                                        aplicar-filtro-avancado(
+                                            filtro-nome,
+                                            filtro-cpf,
+                                            filtro-email,
+                                            filtro-telefone,
+                                            filtro-data-inicio,
+                                            filtro-data-fim
+                                        );
+                                    }
+                                }
+                                
+                                Text {
+                                    text: "✅ Aplicar";
+                                    color: white;
+                                    font-weight: 600;
+                                    vertical-alignment: center;
+                                    horizontal-alignment: center;
+                                }
+                            }
+                            
+                            Rectangle {
+                                width: 120px;
+                                height: 40px;
+                                background: btn-limpar-avancado.has-hover ? #e74c3c : #c0392b;
+                                border-radius: 5px;
+                                
+                                btn-limpar-avancado := TouchArea {
+                                    clicked => {
+                                        limpar-filtro-avancado();
+                                        filtro-avancado-visivel = false;
+                                    }
+                                }
+                                
+                                Text {
+                                    text: "🧹 Limpar";
+                                    color: white;
+                                    font-weight: 600;
+                                    vertical-alignment: center;
+                                    horizontal-alignment: center;
+                                }
+                            }
+                            
+                            Rectangle {
+                                width: 100px;
+                                height: 40px;
+                                background: btn-fechar-avancado.has-hover ? #95a5a6 : #bdc3c7;
+                                border-radius: 5px;
+                                
+                                btn-fechar-avancado := TouchArea {
+                                    clicked => {
+                                        filtro-avancado-visivel = false;
+                                    }
+                                }
+                                
+                                Text {
+                                    text: "❌ Fechar";
+                                    color: #2c3e50;
+                                    font-weight: 600;
+                                    vertical-alignment: center;
+                                    horizontal-alignment: center;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // ==========================================
+                // ✅ INFORMAÇÕES DE PAGINAÇÃO
+                // ==========================================
+                HorizontalLayout {
+                    spacing: 10px;
+                    
+                    Text {
+                        text: "Total: " + total-registros + " registro(s)";
+                        font-size: 16px;
+                        font-weight: 600;
+                        color: #7f8c8d;
+                    }
+                    
+                    if filtro != "": Text {
+                        text: "| Filtro ativo: \"" + filtro + "\"";
+                        font-size: 14px;
+                        font-weight: 600;
+                        color: #3498db;
+                    }
+                    
+                    Rectangle { }
+                    
+                    Text {
+                        text: "Página " + pagina-atual + " de " + total-paginas;
+                        font-size: 14px;
+                        font-weight: 600;
+                        color: #7f8c8d;
+                    }
+                }
+                
+                // CABEÇALHO DA TABELA
+                Rectangle {
+                    height: 40px;
+                    background: #ecf0f1;
+                    border-radius: 5px;
+                    
+                    HorizontalLayout {
+                        padding: 10px;
+                        
+                        Text { text: "ID"; font-weight: 700; width: 50px; }
+                        Text { text: "Nome"; font-weight: 700; width: 200px; }
+                        Text { text: "Email"; font-weight: 700; width: 180px; }
+                        Text { text: "CPF"; font-weight: 700; width: 130px; }
+                        Text { text: "Telefone"; font-weight: 700; width: 120px; }
+                        Text { text: "Matrícula"; font-weight: 700; width: 100px; }
+                        Text { text: "Ações"; font-weight: 700; }
+                    }
+                }
+                
+                // LINHAS DA TABELA
+                for item in dados: Rectangle {
+                    height: 45px;
+                    background: #ffffff;
+                    border-width: 1px;
+                    border-color: #ecf0f1;
+                    border-radius: 5px;
+                    
+                    HorizontalLayout {
+                        padding: 10px;
+                        
+                        Text { text: item.id; width: 50px; color: #7f8c8d; }
+                        Text { text: item.nome; width: 200px; color: #2c3e50; font-weight: 600; }
+                        Text { text: item.email; width: 180px; color: #34495e; }
+                        Text { text: item.cpf; width: 130px; color: #34495e; }
+                        Text { text: item.telefone; width: 120px; color: #34495e; }
+                        Text { text: item.data-matricula; width: 100px; color: #3498db; font-weight: 600; }
+                        
+                        HorizontalLayout {
+                            spacing: 5px;
+                            
+                            Rectangle {
+                                width: 70px;
+                                height: 28px;
+                                background: be.has-hover ? #f39c12 : #f1c40f;
+                                border-radius: 3px;
+                                
+                                be := TouchArea {
+                                    clicked => { editar(item.id); }
+                                }
+                                
+                                Text {
+                                    text: "✏️ Editar";
+                                    font-size: 12px;
+                                    vertical-alignment: center;
+                                    horizontal-alignment: center;
+                                }
+                            }
+                            
+                            Rectangle {
+                                width: 80px;
+                                height: 28px;
+                                background: bd.has-hover ? #c0392b : #e74c3c;
+                                border-radius: 3px;
+                                
+                                bd := TouchArea {
+                                    clicked => { deletar(item.id); }
+                                }
+                                
+                                Text {
+                                    text: "🗑️ Deletar";
+                                    color: white;
+                                    font-size: 12px;
+                                    vertical-alignment: center;
+                                    horizontal-alignment: center;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // ✅ NOVO: CONTROLES DE PAGINAÇÃO
+                HorizontalLayout {
+                    spacing: 10px;
+                    
+                    Rectangle { }
+                    
+                    // Botão Primeira Página
+                    Rectangle {
+                        width: 100px;
+                        height: 35px;
+                        background: btn-primeira.has-hover && pagina-atual > 1 ? #34495e : #95a5a6;
+                        border-radius: 5px;
+                        opacity: pagina-atual > 1 ? 1.0 : 0.5;
+                        
+                        btn-primeira := TouchArea {
+                            enabled: pagina-atual > 1;
+                            clicked => {
+                                ir-pagina(1);
+                            }
+                        }
+                        
+                        Text {
+                            text: "⏮ Primeira";
+                            color: white;
+                            font-size: 12px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                            horizontal-alignment: center;
+                        }
+                    }
+                    
+                    // Botão Anterior
+                    Rectangle {
+                        width: 90px;
+                        height: 35px;
+                        background: btn-anterior.has-hover && pagina-atual > 1 ? #2980b9 : #95a5a6;
+                        border-radius: 5px;
+                        opacity: pagina-atual > 1 ? 1.0 : 0.5;
+                        
+                        btn-anterior := TouchArea {
+                            enabled: pagina-atual > 1;
+                            clicked => {
+                                ir-pagina(pagina-atual - 1);
+                            }
+                        }
+                        
+                        Text {
+                            text: "◀ Anterior";
+                            color: white;
+                            font-size: 12px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                            horizontal-alignment: center;
+                        }
+                    }
+                    
+                    // Indicador de Página Atual
+                    Rectangle {
+                        width: 120px;
+                        height: 35px;
+                        background: #3498db;
+                        border-radius: 5px;
+                        
+                        Text {
+                            text: pagina-atual + " / " + total-paginas;
+                            color: white;
+                            font-size: 16px;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                            horizontal-alignment: center;
+                        }
+                    }
+                    
+                    // Botão Próxima
+                    Rectangle {
+                        width: 90px;
+                        height: 35px;
+                        background: btn-proxima.has-hover && pagina-atual < total-paginas ? #2980b9 : #95a5a6;
+                        border-radius: 5px;
+                        opacity: pagina-atual < total-paginas ? 1.0 : 0.5;
+                        
+                        btn-proxima := TouchArea {
+                            enabled: pagina-atual < total-paginas;
+                            clicked => {
+                                ir-pagina(pagina-atual + 1);
+                            }
+                        }
+                        
+                        Text {
+                            text: "Próxima ▶";
+                            color: white;
+                            font-size: 12px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                            horizontal-alignment: center;
+                        }
+                    }
+                    
+                    // Botão Última Página
+                    Rectangle {
+                        width: 100px;
+                        height: 35px;
+                        background: btn-ultima.has-hover && pagina-atual < total-paginas ? #34495e : #95a5a6;
+                        border-radius: 5px;
+                        opacity: pagina-atual < total-paginas ? 1.0 : 0.5;
+                        
+                        btn-ultima := TouchArea {
+                            enabled: pagina-atual < total-paginas;
+                            clicked => {
+                                ir-pagina(total-paginas);
+                            }
+                        }
+                        
+                        Text {
+                            text: "Última ⏭";
+                            color: white;
+                            font-size: 12px;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                            horizontal-alignment: center;
+                        }
+                    }
+                    
+                    Rectangle { }
+                }
+            }
+        }
+        
+        // ==========================================
+        // MODO CADASTRO/EDIÇÃO
+        // ==========================================
+        if modo == "cadastrar" || modo == "editar": Rectangle {
+            background: white;
+            border-radius: 8px;
+            
+            VerticalLayout {
+                padding: 20px;
+                spacing: 15px;
+                
+                Text {
+                    text: modo == "cadastrar" ? "➕ Cadastrar Novo Aluno" : "✏️ Editar Aluno";
+                    font-size: 18px;
+                    font-weight: 600;
+                    color: #2c3e50;
+                }
+                
+                GridLayout {
+                    spacing: 15px;
+                    
+                    Row {
+                        Text { text: "Nome:"; color: #2c3e50; font-weight: 600; }
+                        Rectangle {
+                            height: 40px;
+                            background: white;
+                            border-width: 1px;
+                            border-color: #bdc3c7;
+                            border-radius: 5px;
+                            HorizontalLayout {
+                                padding-left: 10px;
+                                padding-right: 10px;
+                                TextInput {
+                                    text <=> form-nome;
+                                    font-size: 14px;
+                                    vertical-alignment: center;
+                                    color: #000000;
+                                }
+                            }
+                        }
+                    }
+                    
+                    Row {
+                        Text { text: "Nome Completo:"; color: #2c3e50; font-weight: 600; }
+                        Rectangle {
+                            height: 40px;
+                            background: white;
+                            border-width: 1px;
+                            border-color: #bdc3c7;
+                            border-radius: 5px;
+                            HorizontalLayout {
+                                padding-left: 10px;
+                                padding-right: 10px;
+                                TextInput {
+                                    text <=> form-nome-completo;
+                                    font-size: 14px;
+                                    vertical-alignment: center;
+                                    color: #000000;
+                                }
+                            }
+                        }
+                    }
+                    
+                    Row {
+                        Text { text: "Email:"; color: #2c3e50; font-weight: 600; }
+                        Rectangle {
+                            height: 40px;
+                            background: white;
+                            border-width: 1px;
+                            border-color: #bdc3c7;
+                            border-radius: 5px;
+                            HorizontalLayout {
+                                padding-left: 10px;
+                                padding-right: 10px;
+                                TextInput {
+                                    text <=> form-email;
+                                    font-size: 14px;
+                                    vertical-alignment: center;
+                                    color: #000000;
+                                }
+                            }
+                        }
+                    }
+                    
+                    Row {
+                        Text { text: "CPF:"; color: #2c3e50; font-weight: 600; }
+                        Rectangle {
+                            height: 40px;
+                            background: white;
+                            border-width: 1px;
+                            border-color: #bdc3c7;
+                            border-radius: 5px;
+                            HorizontalLayout {
+                                padding-left: 10px;
+                                padding-right: 10px;
+                                TextInput {
+                                    text <=> form-cpf;
+                                    font-size: 14px;
+                                    vertical-alignment: center;
+                                    color: #000000;
+                                }
+                            }
+                        }
+                    }
+                    
+                    Row {
+                        Text { text: "Telefone:"; color: #2c3e50; font-weight: 600; }
+                        Rectangle {
+                            height: 40px;
+                            background: white;
+                            border-width: 1px;
+                            border-color: #bdc3c7;
+                            border-radius: 5px;
+                            HorizontalLayout {
+                                padding-left: 10px;
+                                padding-right: 10px;
+                                TextInput {
+                                    text <=> form-telefone;
+                                    font-size: 14px;
+                                    vertical-alignment: center;
+                                    color: #000000;
+                                }
+                            }
+                        }
+                    }
+                    
+                    Row {
+                        Text { text: "Endereço:"; color: #2c3e50; font-weight: 600; }
+                        Rectangle {
+                            height: 40px;
+                            background: white;
+                            border-width: 1px;
+                            border-color: #bdc3c7;
+                            border-radius: 5px;
+                            HorizontalLayout {
+                                padding-left: 10px;
+                                padding-right: 10px;
+                                TextInput {
+                                    text <=> form-endereco;
+                                    font-size: 14px;
+                                    vertical-alignment: center;
+                                    color: #000000;
+                                }
+                            }
+                        }
+                    }
+                    
+                    Row {
+                        Text { text: "Data Nascimento:"; color: #2c3e50; font-weight: 600; }
+                        Rectangle {
+                            height: 40px;
+                            background: white;
+                            border-width: 1px;
+                            border-color: #bdc3c7;
+                            border-radius: 5px;
+                            HorizontalLayout {
+                                padding-left: 10px;
+                                padding-right: 10px;
+                                TextInput {
+                                    text <=> form-data-nasc;
+                                    font-size: 14px;
+                                    vertical-alignment: center;
+                                    color: #000000;
+                                }
+                            }
+                        }
+                    }
+                    
+                    Row {
+                        Text { text: "Data Matrícula:"; color: #2c3e50; font-weight: 600; }
+                        Rectangle {
+                            height: 40px;
+                            background: white;
+                            border-width: 1px;
+                            border-color: #bdc3c7;
+                            border-radius: 5px;
+                            HorizontalLayout {
+                                padding-left: 10px;
+                                padding-right: 10px;
+                                TextInput {
+                                    text <=> form-data-matricula;
+                                    font-size: 14px;
+                                    vertical-alignment: center;
+                                    color: #000000;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                HorizontalLayout {
+                    spacing: 10px;
+                    
+                    Rectangle {
+                        width: 120px;
+                        height: 40px;
+                        background: bs.has-hover ? #27ae60 : #2ecc71;
+                        border-radius: 5px;
+                        
+                        bs := TouchArea {
+                            clicked => {
+                                if modo == "cadastrar" {
+                                    salvar-cadastro(
+                                        form-nome, form-nome-completo, form-email,
+                                        form-telefone, form-endereco, form-cpf,
+                                        form-data-nasc, form-data-matricula
+                                    );
+                                } else {
+                                    salvar-edicao(
+                                        form-id, form-nome, form-nome-completo, form-email,
+                                        form-telefone, form-endereco, form-cpf,
+                                        form-data-nasc, form-data-matricula
+                                    );
+                                }
+                            }
+                        }
+                        
+                        Text {
+                            text: "💾 Salvar";
+                            color: white;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                            horizontal-alignment: center;
+                        }
+                    }
+                    
+                    Rectangle {
+                        width: 120px;
+                        height: 40px;
+                        background: bc.has-hover ? #95a5a6 : #bdc3c7;
+                        border-radius: 5px;
+                        
+                        bc := TouchArea {
+                            clicked => { modo = "listar"; }
+                        }
+                        
+                        Text {
+                            text: "❌ Cancelar";
+                            color: #2c3e50;
+                            font-weight: 600;
+                            vertical-alignment: center;
+                            horizontal-alignment: center;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

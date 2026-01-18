@@ -1,0 +1,342 @@
+export component FiltroAvancado inherits Rectangle {
+    in-out property <bool> aberto: false;
+    in-out property <string> titulo: "Filtro Avançado";
+    
+    // Campos genéricos
+    in-out property <string> campo1_label: "";
+    in-out property <string> campo1_valor: "";
+    in-out property <string> campo2_label: "";
+    in-out property <string> campo2_valor: "";
+    in-out property <string> campo3_label: "";
+    in-out property <string> campo3_valor: "";
+    in-out property <string> campo4_label: "";
+    in-out property <string> campo4_valor: "";
+    
+    // Data range
+    in-out property <bool> mostrar_data_range: false;
+    in-out property <string> data_inicio_label: "Data Início";
+    in-out property <string> data_inicio_valor: "";
+    in-out property <string> data_fim_label: "Data Fim";
+    in-out property <string> data_fim_valor: "";
+    
+    // Range numérico
+    in-out property <bool> mostrar_range_numerico: false;
+    in-out property <string> range_min_label: "Mínimo";
+    in-out property <string> range_min_valor: "";
+    in-out property <string> range_max_label: "Máximo";
+    in-out property <string> range_max_valor: "";
+    
+    // Callbacks
+    callback aplicar-filtro();
+    callback limpar-filtro();
+    callback fechar-filtro();
+    
+    height: aberto ? 400px : 50px;
+    background: #ffffff;
+    border-radius: 8px;
+    border-width: 2px;
+    border-color: aberto ? #3498db : #ecf0f1;
+    
+    VerticalLayout {
+        padding: 10px;
+        spacing: 10px;
+        
+        // Cabeçalho
+        HorizontalLayout {
+            Text {
+                text: titulo;
+                font-size: 16px;
+                font-weight: 700;
+                color: #2c3e50;
+            }
+            
+            Rectangle { }
+            
+            Rectangle {
+                width: 40px;
+                height: 40px;
+                background: btn-toggle.has-hover ? #ecf0f1 : transparent;
+                border-radius: 20px;
+                
+                btn-toggle := TouchArea {
+                    clicked => {
+                        aberto = !aberto;
+                    }
+                }
+                
+                Text {
+                    text: aberto ? "▲" : "▼";
+                    font-size: 18px;
+                    color: #3498db;
+                    vertical-alignment: center;
+                    horizontal-alignment: center;
+                }
+            }
+        }
+        
+        if aberto: VerticalLayout {
+            spacing: 15px;
+            
+            // Campos de texto
+            if campo1_label != "": GridLayout {
+                Row {
+                    Text { text: campo1_label; width: 100px; color: #2c3e50; }
+                    Rectangle {
+                        height: 35px;
+                        background: white;
+                        border-width: 1px;
+                        border-color: #bdc3c7;
+                        border-radius: 5px;
+                        
+                        HorizontalLayout {
+                            padding-left: 10px;
+                            padding-right: 10px;
+                            
+                            TextInput {
+                                text <=> campo1_valor;
+                                font-size: 14px;
+                                vertical-alignment: center;
+                                color: #000000;
+                            }
+                        }
+                    }
+                }
+                
+                if campo2_label != "": Row {
+                    Text { text: campo2_label; width: 100px; color: #2c3e50; }
+                    Rectangle {
+                        height: 35px;
+                        background: white;
+                        border-width: 1px;
+                        border-color: #bdc3c7;
+                        border-radius: 5px;
+                        
+                        HorizontalLayout {
+                            padding-left: 10px;
+                            padding-right: 10px;
+                            
+                            TextInput {
+                                text <=> campo2_valor;
+                                font-size: 14px;
+                                vertical-alignment: center;
+                                color: #000000;
+                            }
+                        }
+                    }
+                }
+                
+                if campo3_label != "": Row {
+                    Text { text: campo3_label; width: 100px; color: #2c3e50; }
+                    Rectangle {
+                        height: 35px;
+                        background: white;
+                        border-width: 1px;
+                        border-color: #bdc3c7;
+                        border-radius: 5px;
+                        
+                        HorizontalLayout {
+                            padding-left: 10px;
+                            padding-right: 10px;
+                            
+                            TextInput {
+                                text <=> campo3_valor;
+                                font-size: 14px;
+                                vertical-alignment: center;
+                                color: #000000;
+                            }
+                        }
+                    }
+                }
+                
+                if campo4_label != "": Row {
+                    Text { text: campo4_label; width: 100px; color: #2c3e50; }
+                    Rectangle {
+                        height: 35px;
+                        background: white;
+                        border-width: 1px;
+                        border-color: #bdc3c7;
+                        border-radius: 5px;
+                        
+                        HorizontalLayout {
+                            padding-left: 10px;
+                            padding-right: 10px;
+                            
+                            TextInput {
+                                text <=> campo4_valor;
+                                font-size: 14px;
+                                vertical-alignment: center;
+                                color: #000000;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Data Range - CORRIGIDO
+            if mostrar_data_range: GridLayout {
+                Row {
+                    Text { text: data_inicio_label; width: 100px; color: #2c3e50; }
+                    Rectangle {
+                        height: 35px;
+                        background: white;
+                        border-width: 1px;
+                        border-color: #bdc3c7;
+                        border-radius: 5px;
+                        
+                        HorizontalLayout {
+                            padding-left: 10px;
+                            padding-right: 10px;
+                            
+                            TextInput {
+                                text <=> data_inicio_valor;
+                                font-size: 14px;
+                                vertical-alignment: center;
+                                color: #000000;
+                            }
+                        }
+                    }
+                }
+                
+                Row {
+                    Text { text: data_fim_label; width: 100px; color: #2c3e50; }
+                    Rectangle {
+                        height: 35px;
+                        background: white;
+                        border-width: 1px;
+                        border-color: #bdc3c7;
+                        border-radius: 5px;
+                        
+                        HorizontalLayout {
+                            padding-left: 10px;
+                            padding-right: 10px;
+                            
+                            TextInput {
+                                text <=> data_fim_valor;
+                                font-size: 14px;
+                                vertical-alignment: center;
+                                color: #000000;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Range Numérico
+            if mostrar_range_numerico: GridLayout {
+                Row {
+                    Text { text: range_min_label; width: 100px; color: #2c3e50; }
+                    Rectangle {
+                        height: 35px;
+                        background: white;
+                        border-width: 1px;
+                        border-color: #bdc3c7;
+                        border-radius: 5px;
+                        
+                        HorizontalLayout {
+                            padding-left: 10px;
+                            padding-right: 10px;
+                            
+                            TextInput {
+                                text <=> range_min_valor;
+                                font-size: 14px;
+                                vertical-alignment: center;
+                                color: #000000;
+                            }
+                        }
+                    }
+                }
+                
+                Row {
+                    Text { text: range_max_label; width: 100px; color: #2c3e50; }
+                    Rectangle {
+                        height: 35px;
+                        background: white;
+                        border-width: 1px;
+                        border-color: #bdc3c7;
+                        border-radius: 5px;
+                        
+                        HorizontalLayout {
+                            padding-left: 10px;
+                            padding-right: 10px;
+                            
+                            TextInput {
+                                text <=> range_max_valor;
+                                font-size: 14px;
+                                vertical-alignment: center;
+                                color: #000000;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Botões
+            HorizontalLayout {
+                spacing: 10px;
+                
+                Rectangle {
+                    width: 100px;
+                    height: 40px;
+                    background: btn-aplicar.has-hover ? #27ae60 : #2ecc71;
+                    border-radius: 5px;
+                    
+                    btn-aplicar := TouchArea {
+                        clicked => {
+                            aplicar-filtro();
+                        }
+                    }
+                    
+                    Text {
+                        text: "✅ Aplicar";
+                        color: white;
+                        font-size: 14px;
+                        vertical-alignment: center;
+                        horizontal-alignment: center;
+                    }
+                }
+                
+                Rectangle {
+                    width: 100px;
+                    height: 40px;
+                    background: btn-limpar.has-hover ? #e74c3c : #c0392b;
+                    border-radius: 5px;
+                    
+                    btn-limpar := TouchArea {
+                        clicked => {
+                            limpar-filtro();
+                        }
+                    }
+                    
+                    Text {
+                        text: "🧹 Limpar";
+                        color: white;
+                        font-size: 14px;
+                        vertical-alignment: center;
+                        horizontal-alignment: center;
+                    }
+                }
+                
+                Rectangle {
+                    width: 100px;
+                    height: 40px;
+                    background: btn-fechar.has-hover ? #95a5a6 : #bdc3c7;
+                    border-radius: 5px;
+                    
+                    btn-fechar := TouchArea {
+                        clicked => {
+                            fechar-filtro();
+                        }
+                    }
+                    
+                    Text {
+                        text: "❌ Fechar";
+                        color: #2c3e50;
+                        font-size: 14px;
+                        vertical-alignment: center;
+                        horizontal-alignment: center;
+                    }
+                }
+            }
+        }
+    }
+}

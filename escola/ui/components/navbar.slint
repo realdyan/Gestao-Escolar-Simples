@@ -1,0 +1,139 @@
+export component NavBar inherits Rectangle {
+    in-out property <string> menu-ativo: "";
+    callback menu-clicked(string);
+    callback submenu-clicked(string);
+    
+    height: 40px;
+    background: #2c3e50;
+    
+    HorizontalLayout {
+        padding-left: 5px; 
+        padding-right: 5px; 
+        padding-top: 5px; 
+        padding-bottom: 5px;
+        spacing: 10px;
+        
+        Rectangle {
+            width: 120px;
+            background: menu-cadastros.has-hover ? #34495e : transparent;
+            border-radius: 5px;
+            
+            menu-cadastros := TouchArea {
+                clicked => { menu-clicked("cadastros"); }
+            }
+            
+            Text {
+                text: "📋 Cadastros";
+                color: white;
+                font-size: 14px;
+                vertical-alignment: center;
+                horizontal-alignment: center;
+            }
+        }
+        
+        Rectangle {
+            width: 120px;
+            background: menu-matriculas.has-hover ? #34495e : transparent;
+            border-radius: 5px;
+            
+            menu-matriculas := TouchArea {
+                clicked => { menu-clicked("matriculas"); }
+            }
+            
+            Text {
+                text: "🎓 Matrículas";
+                color: white;
+                font-size: 14px;
+                vertical-alignment: center;
+                horizontal-alignment: center;
+            }
+        }
+        
+        Rectangle {
+            width: 120px;
+            background: menu-turmas.has-hover ? #34495e : transparent;
+            border-radius: 5px;
+            
+            menu-turmas := TouchArea {
+                clicked => { menu-clicked("turmas"); }
+            }
+            
+            Text {
+                text: "👥 Turmas";
+                color: white;
+                font-size: 14px;
+                vertical-alignment: center;
+                horizontal-alignment: center;
+            }
+        }
+        
+        Rectangle { } // Spacer para manter botões à esquerda
+    }
+}
+
+export component SubMenuCadastros inherits Rectangle {
+    callback item-clicked(string);
+    height: 210px; // Aumentado um pouco para caber todos os itens sem apertar
+    background: #ecf0f1;
+    border-radius: 5px;
+    border-width: 1px;
+    border-color: #bdc3c7;
+    drop-shadow-blur: 5px;
+    drop-shadow-color: rgba(0,0,0,0.25);
+    
+    VerticalLayout {
+        padding-left: 10px; 
+        padding-right: 10px; 
+        padding-top: 10px; 
+        padding-bottom: 10px;
+        spacing: 5px;
+        
+        Rectangle {
+            height: 30px;
+            background: area-escolas.has-hover ? #bdc3c7 : transparent;
+            border-radius: 3px;
+            area-escolas := TouchArea { clicked => { item-clicked("escolas"); } }
+            Text { text: "🏫 Escolas"; color: #2c3e50; vertical-alignment: center; x: 10px; }
+        }
+        
+        Rectangle {
+            height: 30px;
+            background: area-professores.has-hover ? #bdc3c7 : transparent;
+            border-radius: 3px;
+            area-professores := TouchArea { clicked => { item-clicked("professores"); } }
+            Text { text: "👨‍🏫 Professores"; color: #2c3e50; vertical-alignment: center; x: 10px; }
+        }
+        
+        Rectangle {
+            height: 30px;
+            background: area-alunos.has-hover ? #bdc3c7 : transparent;
+            border-radius: 3px;
+            area-alunos := TouchArea { clicked => { item-clicked("alunos"); } }
+            Text { text: "🎒 Alunos"; color: #2c3e50; vertical-alignment: center; x: 10px; }
+        }
+        
+        Rectangle {
+            height: 30px;
+            background: area-cursos.has-hover ? #bdc3c7 : transparent;
+            border-radius: 3px;
+            area-cursos := TouchArea { clicked => { item-clicked("cursos"); } }
+            Text { text: "📚 Cursos"; color: #2c3e50; vertical-alignment: center; x: 10px; }
+        }
+        
+        Rectangle {
+            height: 30px;
+            background: area-turmas.has-hover ? #bdc3c7 : transparent;
+            border-radius: 3px;
+            area-turmas := TouchArea { clicked => { item-clicked("turmas"); } }
+            Text { text: "👥 Turmas"; color: #2c3e50; vertical-alignment: center; x: 10px; }
+        }
+        
+        Rectangle {
+            height: 30px;
+            background: area-disciplinas.has-hover ? #bdc3c7 : transparent;
+            border-radius: 3px;
+            area-disciplinas := TouchArea { clicked => { item-clicked("disciplinas"); } }
+            Text { text: "📖 Disciplinas"; color: #2c3e50; vertical-alignment: center; x: 10px; }
+        }
+    }
+}

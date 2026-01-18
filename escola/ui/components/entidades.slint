@@ -1,0 +1,100 @@
+import { EscolaRow } from "../screens/escolas.slint";
+
+export component EntidadesScreen inherits Rectangle {
+    in-out property <[EscolaRow]> escolas: [];
+    in-out property <int> id-ativa: 0;
+    
+    callback selecionar(int, string);
+    
+    background: #ecf0f1;
+    
+    VerticalLayout {
+        padding: 40px;
+        spacing: 20px;
+        
+        Text {
+            text: "🏢 Seleção de Unidade de Trabalho";
+            font-size: 28px;
+            font-weight: 800;
+            color: #2c3e50;
+            horizontal-alignment: center;
+        }
+        
+        Text {
+            text: "Escolha a unidade escolar que deseja gerenciar agora:";
+            font-size: 16px;
+            color: #7f8c8d;
+            horizontal-alignment: center;
+        }
+
+        Rectangle { height: 20px; }
+
+        Flickable {
+            VerticalLayout {
+                spacing: 15px;
+                alignment: start;
+                for escola in escolas : Rectangle {
+                    height: 90px;
+                    background: escola.id == id-ativa ? #3498db : white;
+                    border-radius: 10px;
+                    border-width: 2px;
+                    border-color: escola.id == id-ativa ? #2980b9 : #bdc3c7;
+                    drop-shadow-blur: 8px;
+                    drop-shadow-color: rgba(0,0,0,0.1);
+                    
+                    TouchArea {
+                        clicked => { selecionar(escola.id, escola.nome); }
+                    }
+                    
+                    HorizontalLayout {
+                        padding-left: 25px;
+                        padding-right: 25px;
+                        spacing: 20px;
+                        
+                        Text {
+                            text: "🏫";
+                            font-size: 35px;
+                            vertical-alignment: center;
+                        }
+                        
+                        VerticalLayout {
+                            alignment: center;
+                            Text {
+                                text: escola.nome;
+                                font-size: 20px;
+                                font-weight: 700;
+                                color: escola.id == id-ativa ? white : #2c3e50;
+                            }
+                            Text {
+                                text: escola.email;
+                                font-size: 14px;
+                                color: escola.id == id-ativa ? #ecf0f1 : #95a5a6;
+                            }
+                        }
+                        
+                        Rectangle { } // Spacer
+                        
+                        // CORREÇÃO AQUI: Centralização vertical usando VerticalLayout
+                        if escola.id == id-ativa : VerticalLayout {
+                            alignment: center;
+                            Rectangle {
+                                width: 110px;
+                                height: 30px;
+                                background: #2ecc71;
+                                border-radius: 15px;
+                                Text {
+                                    text: "UNIDADE ATIVA";
+                                    color: white;
+                                    font-size: 10px;
+                                    font-weight: 800;
+                                    horizontal-alignment: center;
+                                    vertical-alignment: center;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
